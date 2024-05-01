@@ -1,4 +1,3 @@
-use std::fmt;
 use std::mem::size_of;
 
 #[derive(Clone)]
@@ -11,16 +10,16 @@ impl Speck128_256 {
     #[inline]
     fn from_be_bytes(bytes: &[u8]) -> u64 {
         let mut tmp = [0u8; size_of::<u64>()];
-        let offset = size_of::<u64>() - 64 / 8;
+        let offset = size_of::<u64>() - 8;
         tmp[offset..].copy_from_slice(bytes);
         u64::from_be_bytes(tmp)
     }
 
     // Convert a 64-bit unsigned integer into a byte array in big-endian order
     #[inline]
-    fn to_be_bytes(word: u64) -> [u8; 64 / 8] {
+    fn to_be_bytes(word: u64) -> [u8; 8] {
         let tmp = word.to_be_bytes();
-        let offset = size_of::<u64>() - 64 / 8;
+        let offset = size_of::<u64>() - 8;
         tmp[offset..].try_into().unwrap()
     }
 
@@ -71,21 +70,22 @@ impl Speck128_256 {
     }
 
     // Initialize a new instance of the Speck128/256 cipher with the given key
-    pub fn new(key: &[u8; 256 / 8]) -> Self {
+    pub fn new(key: &[u8; 32]) -> Self {
         let mut round_keys = [0; 34];
-        let mut l = [0; 4 - 1 + 34 - 1];
+        let mut l = [0; 36];
 
         // Initialize the first round key with the last 64 bits of the key
-        round_keys[0] = Self::from_be_bytes(&key[(4 - 1) * (64 / 8)..(4) * (64 / 8)]);
+        round_keys[0] = Self::from_be_bytes(&key[24..32]);
+
         // Initialize the l array with the remaining 192 bits of the key
-        for i in 0..4 - 1 {
-            l[i] = Self::from_be_bytes(&key[(4 - 2 - i) * (64 / 8)..(4 - 1 - i) * (64 / 8)]);
+        for i in 0..3 {
+            l[i] = Self::from_be_bytes(&key[(2 - i) * 8..(3 - i) * 8]);
         }
 
         // Generate the remaining round keys using the key schedule
-        for i in 0..(34 - 1) {
+        for i in 0..33 {
             let (l_next, k_next) = Self::round_function(i as u64, l[i], round_keys[i]);
-            l[i + 4 - 1] = l_next;
+            l[i + 3] = l_next;
             round_keys[i + 1] = k_next;
         }
 
@@ -94,10 +94,10 @@ impl Speck128_256 {
     }
 
     // Encrypt a 128-bit block using the Speck128/256 cipher
-    pub fn encrypt(&self, block: &mut [u8; 128 / 8]) {
+    pub fn encrypt(&self, block: &mut [u8; 16]) {
         // Split the block into two 64-bit halves
-        let mut x = Self::from_be_bytes(&block[0..(64 / 8)]);
-        let mut y = Self::from_be_bytes(&block[(64 / 8)..]);
+        let mut x = Self::from_be_bytes(&block[0..8]);
+        let mut y = Self::from_be_bytes(&block[8..]);
 
         // Apply the Speck round function 34 times, using the precomputed round keys
         for i in 0..34 {
@@ -107,15 +107,15 @@ impl Speck128_256 {
         }
 
         // Write the encrypted halves back to the block in big-endian order
-        block[0..(64 / 8)].copy_from_slice(&Self::to_be_bytes(x));
-        block[(64 / 8)..].copy_from_slice(&Self::to_be_bytes(y));
+        block[0..8].copy_from_slice(&Self::to_be_bytes(x));
+        block[8..].copy_from_slice(&Self::to_be_bytes(y));
     }
 
     // Decrypt a 128-bit block using the Speck128/256 cipher
-    pub fn decrypt(&self, block: &mut [u8; 128 / 8]) {
+    pub fn decrypt(&self, block: &mut [u8; 16]) {
         // Split the block into two 64-bit halves
-        let mut x = Self::from_be_bytes(&block[0..(64 / 8)]);
-        let mut y = Self::from_be_bytes(&block[(64 / 8)..]);
+        let mut x = Self::from_be_bytes(&block[0..8]);
+        let mut y = Self::from_be_bytes(&block[8..]);
 
         // Apply the inverse Speck round function 34 times, using the precomputed round keys in reverse order
         for i in (0..34).rev() {
@@ -125,14 +125,8 @@ impl Speck128_256 {
         }
 
         // Write the decrypted halves back to the block in big-endian order
-        block[0..(64 / 8)].copy_from_slice(&Self::to_be_bytes(x));
-        block[(64 / 8)..].copy_from_slice(&Self::to_be_bytes(y));
-    }
-}
-
-impl fmt::Debug for Speck128_256 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("Speck128_256 { .. }")
+        block[0..8].copy_from_slice(&Self::to_be_bytes(x));
+        block[8..].copy_from_slice(&Self::to_be_bytes(y));
     }
 }
 
@@ -142,10 +136,19 @@ mod tests {
 
     #[test]
     fn test_rotate_left() {
-        let x: u64 = 0b0001_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000;
+        let x: u64 = 1u64;
         let pos: u64 = 1;
         let result = Speck128_256::rotate_left(x, pos);
-        let expected: u64 = 0b0010_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000;
+        let expected: u64 = 2u64;
         assert_eq!(result, expected, "Failed to rotate left correctly");
+    }
+
+    #[test]
+    fn test_rotate_right() {
+        let x: u64 = 2u64;
+        let pos: u64 = 1;
+        let result = Speck128_256::rotate_right(x, pos);
+        let expected: u64 = 1u64;
+        assert_eq!(result, expected, "Failed to rotate right correctly");
     }
 }

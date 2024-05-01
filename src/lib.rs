@@ -1,5 +1,7 @@
-pub use crate::speck128_128::Speck128_128;
-pub use crate::speck128_256::Speck128_256;
+mod block_mode;
+mod padding;
+mod speck;
 
-mod speck128_128;
-mod speck128_256;
+pub use block_mode::*;
+pub use padding::*;
+pub use speck::*;
