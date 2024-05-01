@@ -1,0 +1,9 @@
+[package]
+name = "speck-cipher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cipher = "0.4.4"
+generic-array = "1.0.0"
+hex-literal = "0.4.1"
