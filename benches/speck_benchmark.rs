@@ -59,10 +59,28 @@ fn bench_speck_cbc(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_speck128_256_encrypt_seed_phrase(c: &mut Criterion) {
+    let key = hex!("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100");
+    let seed_phrase =
+        b"legal winner thank year wave sausage worth useful legal winner thank yellow";
+    let iv_binding = "\x00".repeat(16);
+    let iv = iv_binding.as_bytes().try_into().unwrap();
+
+    c.bench_function("Speck128_256 encrypt & decrypt seed phrase", |b| {
+        b.iter(|| {
+            let block = black_box(seed_phrase);
+            let encrypted = speck_cbc_encrypt(&key, iv, block);
+            let _ = speck_cbc_decrypt(&key, iv, &encrypted);
+        })
+    });
+}
+
 criterion_group!(
     benches,
     bench_speck128_256_encrypt,
     bench_speck128_256_decrypt,
-    bench_speck_cbc
+    bench_speck_cbc,
+    bench_speck128_256_encrypt_seed_phrase,
 );
+
 criterion_main!(benches);

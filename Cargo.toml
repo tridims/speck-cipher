@@ -7,10 +7,11 @@ edition = "2021"
 cipher = "0.4.4"
 generic-array = "1.0.0"
 hex-literal = "0.4.1"
+rand = "0.8.5"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ['real_blackbox'] }
 
 [[bench]]
-name = "example"
+name = "speck_benchmark"
 harness = false
