@@ -7,3 +7,10 @@ edition = "2021"
 cipher = "0.4.4"
 generic-array = "1.0.0"
 hex-literal = "0.4.1"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ['real_blackbox'] }
+
+[[bench]]
+name = "example"
+harness = false

@@ -6,23 +6,6 @@ pub struct Speck128_256 {
 }
 
 impl Speck128_256 {
-    // Convert a byte slice into a 64-bit unsigned integer in big-endian order
-    #[inline]
-    fn from_be_bytes(bytes: &[u8]) -> u64 {
-        let mut tmp = [0u8; size_of::<u64>()];
-        let offset = size_of::<u64>() - 8;
-        tmp[offset..].copy_from_slice(bytes);
-        u64::from_be_bytes(tmp)
-    }
-
-    // Convert a 64-bit unsigned integer into a byte array in big-endian order
-    #[inline]
-    fn to_be_bytes(word: u64) -> [u8; 8] {
-        let tmp = word.to_be_bytes();
-        let offset = size_of::<u64>() - 8;
-        tmp[offset..].try_into().unwrap()
-    }
-
     // Perform a right rotation on a 64-bit unsigned integer by a specified number of positions
     #[inline]
     fn rotate_right(x: u64, pos: u64) -> u64 {
@@ -75,11 +58,11 @@ impl Speck128_256 {
         let mut l = [0; 36];
 
         // Initialize the first round key with the last 64 bits of the key
-        round_keys[0] = Self::from_be_bytes(&key[24..32]);
+        round_keys[0] = from_be_bytes(&key[24..32]);
 
         // Initialize the l array with the remaining 192 bits of the key
         for i in 0..3 {
-            l[i] = Self::from_be_bytes(&key[(2 - i) * 8..(3 - i) * 8]);
+            l[i] = from_be_bytes(&key[(2 - i) * 8..(3 - i) * 8]);
         }
 
         // Generate the remaining round keys using the key schedule
@@ -96,8 +79,8 @@ impl Speck128_256 {
     // Encrypt a 128-bit block using the Speck128/256 cipher
     pub fn encrypt(&self, block: &mut [u8; 16]) {
         // Split the block into two 64-bit halves
-        let mut x = Self::from_be_bytes(&block[0..8]);
-        let mut y = Self::from_be_bytes(&block[8..]);
+        let mut x = from_be_bytes(&block[0..8]);
+        let mut y = from_be_bytes(&block[8..]);
 
         // Apply the Speck round function 34 times, using the precomputed round keys
         for i in 0..34 {
@@ -106,16 +89,16 @@ impl Speck128_256 {
             y = y_next;
         }
 
-        // Write the encrypted halves back to the block in big-endian order
-        block[0..8].copy_from_slice(&Self::to_be_bytes(x));
-        block[8..].copy_from_slice(&Self::to_be_bytes(y));
+        // Write the encrypted halves back to the block
+        block[0..8].copy_from_slice(&to_be_bytes(x));
+        block[8..].copy_from_slice(&to_be_bytes(y));
     }
 
     // Decrypt a 128-bit block using the Speck128/256 cipher
     pub fn decrypt(&self, block: &mut [u8; 16]) {
         // Split the block into two 64-bit halves
-        let mut x = Self::from_be_bytes(&block[0..8]);
-        let mut y = Self::from_be_bytes(&block[8..]);
+        let mut x = from_be_bytes(&block[0..8]);
+        let mut y = from_be_bytes(&block[8..]);
 
         // Apply the inverse Speck round function 34 times, using the precomputed round keys in reverse order
         for i in (0..34).rev() {
@@ -125,9 +108,26 @@ impl Speck128_256 {
         }
 
         // Write the decrypted halves back to the block in big-endian order
-        block[0..8].copy_from_slice(&Self::to_be_bytes(x));
-        block[8..].copy_from_slice(&Self::to_be_bytes(y));
+        block[0..8].copy_from_slice(&to_be_bytes(x));
+        block[8..].copy_from_slice(&to_be_bytes(y));
     }
+}
+
+// Convert a byte slice into a 64-bit unsigned integer in big-endian order
+#[inline]
+fn from_be_bytes(bytes: &[u8]) -> u64 {
+    let mut tmp = [0u8; size_of::<u64>()];
+    let offset = size_of::<u64>() - 8;
+    tmp[offset..].copy_from_slice(bytes);
+    u64::from_be_bytes(tmp)
+}
+
+// Convert a 64-bit unsigned integer into a byte array in big-endian order
+#[inline]
+fn to_be_bytes(word: u64) -> [u8; 8] {
+    let tmp = word.to_be_bytes();
+    let offset = size_of::<u64>() - 8;
+    tmp[offset..].try_into().unwrap()
 }
 
 #[cfg(test)]

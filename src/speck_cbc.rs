@@ -1,6 +1,7 @@
-use crate::speck::Speck128_256;
+use crate::pkcs7::*;
+use crate::speck128_256::Speck128_256;
 
-pub fn xor_bytes(bytes1: &[u8], bytes2: &[u8]) -> Vec<u8> {
+fn xor_bytes(bytes1: &[u8], bytes2: &[u8]) -> Vec<u8> {
     bytes1
         .iter()
         .zip(bytes2.iter())
@@ -8,8 +9,8 @@ pub fn xor_bytes(bytes1: &[u8], bytes2: &[u8]) -> Vec<u8> {
         .collect()
 }
 
-pub fn speck_cbc_encrypt(key: &[u8; 32], iv: &[u8], plaintext: &[u8]) -> Vec<u8> {
-    let padded_plaintext = crate::padding::pad_pkcs7(plaintext, 16);
+pub fn speck_cbc_encrypt(key: &[u8; 32], iv: &[u8; 16], plaintext: &[u8]) -> Vec<u8> {
+    let padded_plaintext = pad_pkcs7(plaintext, 16);
     let iv = iv.to_vec();
 
     let cipher = Speck128_256::new(key);
@@ -31,7 +32,7 @@ pub fn speck_cbc_encrypt(key: &[u8; 32], iv: &[u8], plaintext: &[u8]) -> Vec<u8>
     encrypted_blocks.into_iter().flatten().collect::<Vec<u8>>()
 }
 
-pub fn speck_cbc_decrypt(key: &[u8; 32], iv: &[u8], ciphertext: &[u8]) -> Vec<u8> {
+pub fn speck_cbc_decrypt(key: &[u8; 32], iv: &[u8; 16], ciphertext: &[u8]) -> Vec<u8> {
     let iv = iv.to_vec();
 
     let cipher = Speck128_256::new(key);
@@ -52,5 +53,5 @@ pub fn speck_cbc_decrypt(key: &[u8; 32], iv: &[u8], ciphertext: &[u8]) -> Vec<u8
         decrypted_blocks.push(block.into_iter().collect::<Vec<u8>>());
     });
 
-    crate::padding::unpad_pkcs7(&decrypted_blocks.into_iter().flatten().collect::<Vec<u8>>())
+    unpad_pkcs7(&decrypted_blocks.into_iter().flatten().collect::<Vec<u8>>())
 }

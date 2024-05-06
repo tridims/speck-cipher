@@ -1,7 +1,7 @@
-mod block_mode;
-mod padding;
-mod speck;
+mod pkcs7;
+mod speck128_256;
+mod speck_cbc;
 
-pub use block_mode::*;
-pub use padding::*;
-pub use speck::*;
+pub use pkcs7::*;
+pub use speck128_256::*;
+pub use speck_cbc::*;

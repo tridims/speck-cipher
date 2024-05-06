@@ -1,23 +1,7 @@
 #[cfg(test)]
 mod tests {
     use hex_literal::hex;
-    use speck_cipher::{Speck128_128, Speck128_256};
-
-    #[test]
-    fn test_speck128_128() {
-        let key = hex!("0f0e0d0c0b0a09080706050403020100");
-        let plaintext = hex!("6c617669757165207469206564616d20");
-        let ciphertext = hex!("a65d9851797832657860fedf5c570d18");
-
-        let cipher = Speck128_128::new(&key);
-
-        let mut block = plaintext;
-        cipher.encrypt(&mut block);
-        assert_eq!(block, ciphertext);
-
-        cipher.decrypt(&mut block);
-        assert_eq!(block, plaintext);
-    }
+    use speck_cipher::Speck128_256;
 
     #[test]
     fn test_speck128_256() {
@@ -37,8 +21,7 @@ mod tests {
 
     #[test]
     fn test_cbc_block_mode_with_random_message() {
-        let binding = "This is some secret message. Do not reveal. I mean really this is some secret..duh! Why would you want to reveal it anyway."
-            .repeat(20);
+        let binding = "This is some secret message. Do not reveal.".repeat(50);
         let msg = binding.as_bytes();
         println!("length of msg: {}", msg.len());
 
@@ -46,8 +29,8 @@ mod tests {
         let binding = "\x00".repeat(16);
         let iv = binding.as_bytes();
 
-        let encrypted = speck_cipher::speck_cbc_encrypt(key, iv, msg);
-        let decrypted = speck_cipher::speck_cbc_decrypt(key, iv, &encrypted);
+        let encrypted = speck_cipher::speck_cbc_encrypt(key, iv.try_into().unwrap(), msg);
+        let decrypted = speck_cipher::speck_cbc_decrypt(key, iv.try_into().unwrap(), &encrypted);
 
         assert_eq!(msg, decrypted);
     }
