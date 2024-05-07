@@ -2,8 +2,10 @@ use crypto_wallet::bip39::mnemonic::*;
 use rand::{thread_rng, Rng};
 use speck_cipher::speck_cbc_encrypt;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
 
-const NUM_SAMPLES: usize = 1_000_000;
+const NUM_SAMPLES: usize = 10_000;
 
 fn generate_random_key() -> [u8; 32] {
     let mut rng = thread_rng();
@@ -42,31 +44,6 @@ fn calculate_entropy(data: &[u8]) -> f64 {
     entropy
 }
 
-// fn main() {
-//     // Generate a random key and IV
-//     let key = generate_random_key();
-//     let iv = generate_random_iv();
-
-//     // Generate random plaintext samples
-//     let plaintexts: Vec<Vec<u8>> = (0..NUM_SAMPLES)
-//         .map(|_| generate_random_mnemonic_phrase().as_bytes().to_vec())
-//         .collect();
-
-//     // Encrypt the plaintexts using Speck cipher in CBC mode
-//     let ciphertexts: Vec<Vec<u8>> = plaintexts
-//         .iter()
-//         .map(|plaintext| speck_cbc_encrypt(&key, &iv, plaintext))
-//         .collect();
-
-//     // Concatenate the ciphertexts into a single byte array
-//     let encrypted_data: Vec<u8> = ciphertexts.into_iter().flatten().collect();
-
-//     // Calculate the entropy of the encrypted data
-//     let entropy = calculate_entropy(&encrypted_data);
-
-//     println!("Entropy: {:.4} bits per byte", entropy);
-// }
-
 fn main() {
     // Generate a random key and IV
     let key = generate_random_key();
@@ -77,6 +54,8 @@ fn main() {
         .map(|_| generate_random_mnemonic_phrase().as_bytes().to_vec())
         .collect();
 
+    let mut file = File::create("data/entropy_values.txt").expect("Unable to create file");
+
     // Encrypt the plaintexts using Speck cipher in CBC mode and calculate the entropy
     for plaintext in &plaintexts {
         let ciphertext = speck_cbc_encrypt(&key, &iv, plaintext);
@@ -85,10 +64,7 @@ fn main() {
         let plaintext_entropy = calculate_entropy(plaintext);
         let ciphertext_entropy = calculate_entropy(&ciphertext);
 
-        println!("Plaintext entropy: {:.4} bits per byte", plaintext_entropy);
-        println!(
-            "Ciphertext entropy: {:.4} bits per byte",
-            ciphertext_entropy
-        );
+        writeln!(file, "{:.4} {:.4}", plaintext_entropy, ciphertext_entropy)
+            .expect("Unable to write to file");
     }
 }
