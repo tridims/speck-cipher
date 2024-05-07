@@ -47,6 +47,7 @@ fn main() {
     );
 
     export_data_to_file(&data, "data/uniformity_data.txt");
+    export_data_to_file(&[critical_value], "data/critical_value.txt");
 }
 
 fn generate_random_key() -> [u8; 32] {
