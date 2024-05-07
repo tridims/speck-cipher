@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 
-const NUM_SAMPLES: usize = 10_000;
+// const NUM_SAMPLES: usize = 1_000;
+const NUM_SAMPLES: usize = 500;
 
 fn generate_random_key() -> [u8; 32] {
     let mut rng = thread_rng();
