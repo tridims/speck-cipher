@@ -1,4 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use crypto_wallet::bip39::mnemonic::*;
 use hex_literal::hex;
 use speck_cipher::{speck_cbc_decrypt, speck_cbc_encrypt, Speck128_256};
 
@@ -59,7 +60,7 @@ fn bench_speck_cbc(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_speck128_256_encrypt_seed_phrase(c: &mut Criterion) {
+fn bench_speck128_256_encrypt_static_seed_phrase(c: &mut Criterion) {
     let key = hex!("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100");
     let seed_phrase =
         b"legal winner thank year wave sausage worth useful legal winner thank yellow";
@@ -75,12 +76,49 @@ fn bench_speck128_256_encrypt_seed_phrase(c: &mut Criterion) {
     });
 }
 
+fn bench_speck128_256_encrypt_decrypt_random_seed_phrase(c: &mut Criterion) {
+    let key = hex!("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100");
+    let iv_binding = "\x00".repeat(16);
+    let iv = iv_binding.as_bytes().try_into().unwrap();
+
+    let mut group = c.benchmark_group("Speck128_256 encrypt and decrypt random seed phrase");
+
+    group.bench_function("Encryption", |b| {
+        b.iter_batched(
+            || Mnemonic::random(24).unwrap().to_phrase(), // Setup: generate the seed phrase
+            |seed_phrase| {
+                // The actual code to benchmark
+                speck_cbc_encrypt(&key, iv, seed_phrase.as_bytes())
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("Decryption", |b| {
+        b.iter_batched(
+            || {
+                // Setup: generate the seed phrase and encrypt it
+                let seed_phrase = Mnemonic::random(24).unwrap().to_phrase();
+                speck_cbc_encrypt(&key, iv, seed_phrase.as_bytes())
+            },
+            |encrypted| {
+                // The actual code to benchmark
+                let _ = speck_cbc_decrypt(&key, iv, &encrypted);
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_speck128_256_encrypt,
     bench_speck128_256_decrypt,
     bench_speck_cbc,
-    bench_speck128_256_encrypt_seed_phrase,
+    bench_speck128_256_encrypt_static_seed_phrase,
+    bench_speck128_256_encrypt_decrypt_random_seed_phrase,
 );
 
 criterion_main!(benches);
