@@ -10,12 +10,6 @@ To run the program, you need rust and cargo installed. Then you can run the foll
 cargo run
 ```
 
-## To install rust and cargo
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
 ## To run the tests
 
 ```bash
@@ -28,7 +22,7 @@ cargo test
 cargo bench
 ```
 
-## To run the statistical tests, you need to run the example program.
+## To run the statistical tests, you need to run the file that you want in examples folder.
 
 ```bash
 cargo run --example <example_name>
