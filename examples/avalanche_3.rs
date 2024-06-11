@@ -6,6 +6,12 @@ use speck_cipher::test_utils::{
 use std::fs::File;
 use std::io::Write;
 
+// Testing Avalanche Effect on the modified data (back) like before
+// But with flipping bit in the key and iv (1 bit each)
+// Because when the data is changed at the back and the data is really long, the result is not as good
+// as when the data is changed at the front
+// To verify if using a different key and iv will improve the avalanche effect
+
 fn benchmark_avalanche_effect_on_data(test_data: &[&str], modified_data: &[&str]) -> Vec<f64> {
     let mut rng = rand::thread_rng();
     let mut avalanche_effects = vec![0.0; test_data.len()];
@@ -30,11 +36,11 @@ fn main() {
     let avalanche_effects_on_data =
         benchmark_avalanche_effect_on_data(&MNEMONIC_DATA, &MNEMONIC_DATA_MODIFIED_BACK);
 
-    let mut data_file_data = File::create("data/avalanche3/avalanche_3.txt").unwrap();
+    let mut data_file_data = File::create("data/avalanche/test_3/data.txt").unwrap();
 
     for (index, effect) in avalanche_effects_on_data.iter().enumerate() {
         writeln!(data_file_data, "{} {}", index, effect).unwrap();
     }
 
-    println!("Avalanche effect data has been written to data/avalanche3/avalanche_3.txt");
+    println!("Avalanche effect data has been written to data/avalanche/test_3")
 }

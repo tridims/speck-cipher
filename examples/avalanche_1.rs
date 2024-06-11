@@ -3,6 +3,9 @@ use speck_cipher::{speck_cbc_encrypt, test_utils::hamming_distance};
 use std::fs::File;
 use std::io::Write;
 
+// Testing Avalanche Effect on Flipping Bits at random positions in the plaintext and key
+// each result of the bit flipped ciphertext is compared to the original ciphertext
+
 // Testing the avalanche effect when flipping bits in the plaintext
 fn benchmark_avalanche_effect_on_plaintext(
     num_iterations: usize,
@@ -85,8 +88,8 @@ fn main() {
     let avalanche_effects_on_key =
         benchmark_avalanche_effect_on_key(num_iterations, max_flipped_bits);
 
-    let mut data_file_pl = File::create("data/avalanche_data_plaintext.txt").unwrap();
-    let mut data_file_key = File::create("data/avalanche_data_key.txt").unwrap();
+    let mut data_file_pl = File::create("data/avalanche/test_1/data_plaintext.txt").unwrap();
+    let mut data_file_key = File::create("data/avalanche/test_1/data_key.txt").unwrap();
 
     for (flipped_bits, effect) in avalanche_effects_on_plaintext.iter().enumerate() {
         writeln!(data_file_pl, "{} {}", flipped_bits, effect).unwrap();
@@ -94,4 +97,6 @@ fn main() {
     for (flipped_bits, effect) in avalanche_effects_on_key.iter().enumerate() {
         writeln!(data_file_key, "{} {}", flipped_bits, effect).unwrap();
     }
+
+    println!("Avalanche effect data has been written to data/avalanche/test_1");
 }

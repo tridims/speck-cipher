@@ -8,10 +8,6 @@ use std::io::Write;
 // const NUM_SAMPLES: usize = 1_000;
 const NUM_SAMPLES: usize = 500;
 
-fn generate_random_mnemonic_phrase() -> String {
-    Mnemonic::random(12).unwrap().to_phrase()
-}
-
 fn calculate_entropy(data: &[u8]) -> f64 {
     let mut frequency_map = HashMap::new();
     let data_len = data.len() as f64;
@@ -39,10 +35,16 @@ fn main() {
 
     // Generate random plaintext samples
     let plaintexts: Vec<Vec<u8>> = (0..NUM_SAMPLES)
-        .map(|_| generate_random_mnemonic_phrase().as_bytes().to_vec())
+        .map(|_| {
+            Mnemonic::random(12)
+                .unwrap()
+                .to_phrase()
+                .as_bytes()
+                .to_vec()
+        })
         .collect();
 
-    let mut file = File::create("data/entropy_values.txt").expect("Unable to create file");
+    let mut file = File::create("data/entropy/data.txt").expect("Unable to create file");
 
     // Encrypt the plaintexts using Speck cipher in CBC mode and calculate the entropy
     for plaintext in &plaintexts {
@@ -55,4 +57,6 @@ fn main() {
         writeln!(file, "{:.4} {:.4}", plaintext_entropy, ciphertext_entropy)
             .expect("Unable to write to file");
     }
+
+    println!("Entropy data has been written to data/entropy");
 }
