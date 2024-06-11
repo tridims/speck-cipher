@@ -1,15 +1,9 @@
 use rand::Rng;
-use speck_cipher::speck_cbc_encrypt;
+use speck_cipher::{speck_cbc_encrypt, test_utils::hamming_distance};
 use std::fs::File;
 use std::io::Write;
 
-fn hamming_distance(a: &[u8], b: &[u8]) -> usize {
-    a.iter()
-        .zip(b.iter())
-        .map(|(&x, &y)| (x ^ y).count_ones() as usize)
-        .sum()
-}
-
+// Testing the avalanche effect when flipping bits in the plaintext
 fn benchmark_avalanche_effect_on_plaintext(
     num_iterations: usize,
     max_flipped_bits: usize,
@@ -37,12 +31,6 @@ fn benchmark_avalanche_effect_on_plaintext(
 
             let modified_ciphertext = speck_cbc_encrypt(&key, &iv, &modified_plaintext);
             let distance = hamming_distance(&ciphertext, &modified_ciphertext);
-            // println!(
-            //     "distance : {}, computed score: {}, avalanche score: {:?}",
-            //     distance,
-            //     distance as f64 / (ciphertext.len() * 8) as f64,
-            //     avalanche_effects
-            // );
             avalanche_effects[flipped_bits] += distance as f64 / (ciphertext.len() * 8) as f64;
         }
     }
@@ -105,30 +93,5 @@ fn main() {
     }
     for (flipped_bits, effect) in avalanche_effects_on_key.iter().enumerate() {
         writeln!(data_file_key, "{} {}", flipped_bits, effect).unwrap();
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_hamming_distance() {
-        let a = [0b10101010, 0b11110000];
-        let b = [0b01010101, 0b00001111];
-        assert_eq!(hamming_distance(&a, &b), 16);
-    }
-
-    #[test]
-    fn test_benchmark_avalanche_effect() {
-        let num_iterations = 10;
-        let max_flipped_bits = 2;
-        let avalanche_effects =
-            benchmark_avalanche_effect_on_plaintext(num_iterations, max_flipped_bits);
-
-        assert_eq!(avalanche_effects.len(), max_flipped_bits + 1);
-        for &effect in &avalanche_effects {
-            assert!(effect >= 0.0 && effect <= 1.0);
-        }
     }
 }

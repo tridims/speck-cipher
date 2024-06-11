@@ -8,20 +8,6 @@ use std::io::Write;
 // const NUM_SAMPLES: usize = 1_000;
 const NUM_SAMPLES: usize = 500;
 
-fn generate_random_key() -> [u8; 32] {
-    let mut rng = thread_rng();
-    let mut key = [0u8; 32];
-    rng.fill(&mut key);
-    key
-}
-
-fn generate_random_iv() -> [u8; 16] {
-    let mut rng = thread_rng();
-    let mut iv = [0u8; 16];
-    rng.fill(&mut iv);
-    iv
-}
-
 fn generate_random_mnemonic_phrase() -> String {
     Mnemonic::random(12).unwrap().to_phrase()
 }
@@ -47,8 +33,9 @@ fn calculate_entropy(data: &[u8]) -> f64 {
 
 fn main() {
     // Generate a random key and IV
-    let key = generate_random_key();
-    let iv = generate_random_iv();
+    let mut rng = thread_rng();
+    let key: [u8; 32] = rng.gen();
+    let iv: [u8; 16] = rng.gen();
 
     // Generate random plaintext samples
     let plaintexts: Vec<Vec<u8>> = (0..NUM_SAMPLES)
